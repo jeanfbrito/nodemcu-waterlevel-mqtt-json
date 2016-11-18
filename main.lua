@@ -30,13 +30,7 @@ mqtt:lwt("devices/" .. DEVICE .. "/status", "offline", 0, 1)
 
 mqtt:on("offline", function(con)
     print ("offline, Reconnecting")
-    mqtt:connect(HOST, 1883, 0, function(conn)
-        print("reconnected to broker")
-        mqtt:publish("devices/" .. DEVICE .. "/status","online",0,1, function(conn)
-            print("sent online status for LWT use")
-          end)
-        sync_rtc()
-      end)
+    tmr.alarm(1,2000,1,reconnect_mqtt)
   end)
 
 mqtt:on("message", function(conn, topic, data)
@@ -65,6 +59,18 @@ function check_wifi()
       end)
     tmr.alarm(1,10000,1,sendData)
   end
+end
+
+function reconnect_mqtt()
+  print("try to reconnect to mqtt broker")
+  mqtt:connect(HOST, 1883, 0, function(conn)
+      print("reconnected to broker")
+      mqtt:publish("devices/" .. DEVICE .. "/status","online",0,1, function(conn)
+          print("sent online status for LWT use")
+        end)
+      sync_rtc()
+      tmr.alarm(1,10000,1,sendData)
+    end)
 end
 
 function sync_rtc()
